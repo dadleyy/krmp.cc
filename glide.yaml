@@ -1,0 +1,3 @@
+package: github.com/dadleyy/krmp.cc
+import:
+- package: github.com/lucasb-eyer/go-colorful
