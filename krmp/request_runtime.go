@@ -73,7 +73,7 @@ func (runtime *RequestRuntime) Package(hex string) (Package, error) {
 			return Package{}, fmt.Errorf("shade_max must be between 0 - 100")
 		}
 
-		min = float64(m) * 0.01
+		max = float64(m) * 0.01
 	}
 
 	if query.Get("shade_min") != "" {
