@@ -1,6 +1,8 @@
 package main
 
 import "fmt"
+import "log"
+import "flag"
 import "time"
 import "bytes"
 import "regexp"
@@ -67,8 +69,12 @@ func preview(runtime *krmp.RequestRuntime) {
 }
 
 func main() {
-	fmt.Printf("starting server...\n")
-	port := "8080"
+	var port string
+
+	flag.StringVar(&port, "port", "8080", "which port to run the server on")
+	flag.Parse()
+
+	log.Printf("starting server on port %s\n", port)
 
 	mux := krmp.Multiplexer{}
 
