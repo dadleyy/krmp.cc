@@ -16,11 +16,11 @@ func (mux *Multiplexer) ServeHTTP(writer http.ResponseWriter, request *http.Requ
 	results := make(chan Result)
 	errors := make(chan error)
 
-	runtime := RequestRuntime{logger, request, results, errors}
+	runtime := RequestRuntime{logger, request, results, errors, []string{}}
 	url := request.URL
 
 	handler := func(runtime *RequestRuntime) {
-		runtime.Error(fmt.Errorf("NOT_FOUND"))
+		runtime.Error(fmt.Errorf("not found"))
 	}
 
 	path := url.EscapedPath()
@@ -29,6 +29,25 @@ func (mux *Multiplexer) ServeHTTP(writer http.ResponseWriter, request *http.Requ
 			continue
 		}
 
+		if subs := element.Path.NumSubexp(); subs == 0 {
+			logger.Printf("no sub expressions found for \"%v\", moving on", element.Path)
+			handler = element.Handler
+			break
+		}
+
+		groups := element.Path.FindAllStringSubmatch(path, -1)
+
+		if groups == nil {
+			logger.Printf("found NO matches: %v", groups)
+			handler = element.Handler
+			break
+		}
+
+		for _, group := range groups[0][1:] {
+			runtime.pathParams = append(runtime.pathParams, group)
+		}
+
+		logger.Printf("path params: %v", runtime.pathParams)
 		handler = element.Handler
 		break
 	}

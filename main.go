@@ -21,7 +21,13 @@ func logger(next krmp.Terminal) krmp.Terminal {
 }
 
 func create(runtime *krmp.RequestRuntime) {
-	pkg, err := runtime.Package()
+	hex := runtime.URL.Query().Get("base")
+
+	if alt, err := runtime.PathParameter(0); err == nil {
+		hex = alt
+	}
+
+	pkg, err := runtime.Package(hex)
 
 	if err != nil {
 		runtime.Error(err)
@@ -40,7 +46,14 @@ func create(runtime *krmp.RequestRuntime) {
 }
 
 func preview(runtime *krmp.RequestRuntime) {
-	pkg, err := runtime.Package()
+	hex := runtime.URL.Query().Get("base")
+
+	if alt, err := runtime.PathParameter(0); err == nil {
+		hex = alt
+	}
+
+	runtime.Printf("previewing hex \"%s\"", hex)
+	pkg, err := runtime.Package(hex)
 
 	if err != nil {
 		runtime.Error(err)
@@ -87,7 +100,9 @@ func main() {
 	mux := krmp.Multiplexer{}
 
 	routes := []krmp.Route{
-		krmp.Route{"GET", regexp.MustCompile("/preview"), preview},
+		krmp.Route{"GET", regexp.MustCompile("^/preview$"), preview},
+		krmp.Route{"GET", regexp.MustCompile("^/([a-f0-9]{6}|[a-f0-9]{3})$"), create},
+		krmp.Route{"GET", regexp.MustCompile("^/([a-f0-9]{6}|[a-f0-9]{3})/preview$"), preview},
 		krmp.Route{"GET", regexp.MustCompile(".*"), create},
 	}
 

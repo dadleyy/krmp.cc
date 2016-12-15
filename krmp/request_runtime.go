@@ -12,12 +12,14 @@ const PaletteDefaultSteps = 3
 const PaletteDefaultShadeInc = 0.05
 const PaletteDefaultShadeMax = 0.99
 const PaletteDefaultShadeMin = 0.50
+const PaletteMaxSteps = 36
 
 type RequestRuntime struct {
 	*log.Logger
 	*http.Request
-	results chan Result
-	errors  chan error
+	results    chan Result
+	errors     chan error
+	pathParams []string
 }
 
 func (runtime *RequestRuntime) Finish(r Result) {
@@ -28,7 +30,15 @@ func (runtime *RequestRuntime) Error(err error) {
 	runtime.errors <- err
 }
 
-func (runtime *RequestRuntime) Package() (Package, error) {
+func (runtime *RequestRuntime) PathParameter(index int) (string, error) {
+	if runtime.pathParams == nil || index >= len(runtime.pathParams) {
+		return "", fmt.Errorf("parameter not found")
+	}
+
+	return runtime.pathParams[index], nil
+}
+
+func (runtime *RequestRuntime) Package(hex string) (Package, error) {
 	base, _ := colorful.Hex(PaletteDefaultBase)
 	result := Palette{base, PaletteDefaultSteps, ""}
 	query := runtime.URL.Query()
@@ -36,15 +46,15 @@ func (runtime *RequestRuntime) Package() (Package, error) {
 	if query.Get("steps") != "" {
 		steps, err := strconv.Atoi(query.Get("steps"))
 
-		if err != nil || steps > 36 {
+		if err != nil || steps > PaletteMaxSteps {
 			return Package{}, fmt.Errorf("step count must be valid number between 1 - 360")
 		}
 
 		result.steps = uint(steps)
 	}
 
-	if query.Get("base") != "" {
-		hex := fmt.Sprintf("#%s", strings.TrimPrefix(query.Get("base"), "#"))
+	if hex != "" {
+		hex = fmt.Sprintf("#%s", strings.TrimPrefix(hex, "#"))
 		base, err := colorful.Hex(hex)
 
 		if err != nil {
