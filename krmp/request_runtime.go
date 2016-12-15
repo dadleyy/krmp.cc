@@ -91,6 +91,10 @@ func (runtime *RequestRuntime) Package(hex string) (Package, error) {
 		max = 0
 	}
 
+	if alt := query.Get("noconflict"); len(alt) > 6 {
+		return Package{}, fmt.Errorf("noconflict classes must be less than 7 characters long")
+	}
+
 	expanded := query.Get("expanded") == "true"
 	return Package{result.Variations(), min, max, inc, expanded, query.Get("noconflict")}, nil
 }
