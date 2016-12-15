@@ -81,5 +81,6 @@ func (runtime *RequestRuntime) Package() (Package, error) {
 		max = 0
 	}
 
-	return Package{result.Variations(), min, max, inc}, nil
+	expanded := query.Get("expanded") == "true"
+	return Package{result.Variations(), min, max, inc, expanded}, nil
 }

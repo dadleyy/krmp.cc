@@ -1,6 +1,18 @@
-hash: d5db9d53436cdf046f312eb801b997b69b14fffeeace66b5d96ddd9c5e962258
-updated: 2016-12-14T11:58:40.564128189-05:00
+hash: c01c55d78d4ccf7e6b619edce0963a636b4fb182f57bed442991caa65395487f
+updated: 2016-12-15T11:32:21.09221091-05:00
 imports:
 - name: github.com/lucasb-eyer/go-colorful
   version: 9c2852a141bf4711e4276f8f119c90d0f20a556c
+- name: github.com/tdewolff/buffer
+  version: 0edfcb7b750146ff879e95831de2ef53605a5cb5
+- name: github.com/tdewolff/minify
+  version: 41f3effd65817bac8acea89d49b3982211803a4d
+  subpackages:
+  - css
+- name: github.com/tdewolff/parse
+  version: b28f804999db32c71234d3dd2c58b7deb85891f6
+  subpackages:
+  - css
+- name: github.com/tdewolff/strconv
+  version: 3e8091f4417ebaaa3910da63a45ea394ebbfb0e3
 testImports: []

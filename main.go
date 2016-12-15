@@ -28,7 +28,15 @@ func create(runtime *krmp.RequestRuntime) {
 		return
 	}
 
-	runtime.Finish(krmp.Result{pkg.RawCss(), "text/css"})
+	styles, err := pkg.Stylesheet()
+
+	if err != nil {
+		runtime.Error(err)
+		return
+	}
+
+	contents := bytes.NewBufferString(string(styles))
+	runtime.Finish(krmp.Result{contents, "text/css"})
 }
 
 func preview(runtime *krmp.RequestRuntime) {
@@ -48,10 +56,17 @@ func preview(runtime *krmp.RequestRuntime) {
 
 	buffer := bytes.NewBuffer(make([]byte, 0))
 
+	styles, err := pkg.Stylesheet()
+
+	if err != nil {
+		runtime.Error(err)
+		return
+	}
+
 	context := struct {
 		Styles   template.CSS
 		Previews template.HTML
-	}{pkg.Stylesheet(), pkg.Markup()}
+	}{styles, pkg.Markup()}
 
 	if err := engine.Execute(buffer, context); err != nil {
 		runtime.Error(err)
