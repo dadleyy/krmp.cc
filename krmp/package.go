@@ -45,7 +45,7 @@ func (p Package) Stylesheet() template.CSS {
 
 	for i, color := range p.variations {
 		result += template.CSS(fmt.Sprintf(".bg-%d { background-color: %s; }", i, color.Hex()))
-		result += template.CSS(fmt.Sprintf(".ifg-%d { color: %s; }", i, color.Hex()))
+		result += template.CSS(fmt.Sprintf(".fg-%d { color: %s; }", i, color.Hex()))
 
 		_, _, b := color.Hsv()
 		mods := map[string]int{"lighten": 1, "darken": 1}
