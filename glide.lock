@@ -1,0 +1,6 @@
+hash: d5db9d53436cdf046f312eb801b997b69b14fffeeace66b5d96ddd9c5e962258
+updated: 2016-12-14T11:58:40.564128189-05:00
+imports:
+- name: github.com/lucasb-eyer/go-colorful
+  version: 9c2852a141bf4711e4276f8f119c90d0f20a556c
+testImports: []
