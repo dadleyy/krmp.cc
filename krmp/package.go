@@ -12,6 +12,29 @@ type Package struct {
 	maxShade   float64
 	shadeInc   float64
 	expanded   bool
+	noconflict string
+}
+
+func (p Package) rule(number int, hex, layer, modifier string) template.CSS {
+	selector := fmt.Sprintf(".%s-%d", layer, number)
+
+	if p.noconflict != "" {
+		selector += fmt.Sprintf(".%s", p.noconflict)
+	}
+
+	if modifier != "" {
+		selector += fmt.Sprintf(".%s", modifier)
+	}
+
+	property := "background-color"
+
+	if layer == "fg" {
+		property = "color"
+	}
+
+	rule := fmt.Sprintf("%s: %s", property, hex)
+
+	return template.CSS(fmt.Sprintf("%s { %s; }\n", selector, rule))
 }
 
 func (p Package) Markup() template.HTML {
@@ -19,7 +42,7 @@ func (p Package) Markup() template.HTML {
 
 	for i, color := range p.variations {
 		result += template.HTML("<div class=\"clearfix\">")
-		result += template.HTML(fmt.Sprintf("<div class=\"swatch bg-%d\"></div>", i))
+		result += template.HTML(fmt.Sprintf("<div class=\"swatch bg-%d %s\"></div>", i, p.noconflict))
 
 		_, _, b := color.Hsv()
 		mods := map[string]int{"lighten": 1, "darken": 1}
@@ -33,7 +56,7 @@ func (p Package) Markup() template.HTML {
 			}
 
 			x, _ := mods[modifier]
-			result += template.HTML(fmt.Sprintf("<div class=\"swatch bg-%d %s-%d\"></div>", i, modifier, x))
+			result += template.HTML(fmt.Sprintf("<div class=\"swatch bg-%d %s-%d %s\"></div>", i, modifier, x, p.noconflict))
 			mods[modifier] += 1
 		}
 
@@ -47,23 +70,27 @@ func (p Package) Stylesheet() (template.CSS, error) {
 	result := template.CSS("")
 
 	for i, color := range p.variations {
-		result += template.CSS(fmt.Sprintf(".bg-%d { background-color: %s; }\n", i, color.Hex()))
-		result += template.CSS(fmt.Sprintf(".fg-%d { color: %s; }\n", i, color.Hex()))
+		result += p.rule(i, color.Hex(), "bg", "")
+		result += p.rule(i, color.Hex(), "fg", "")
 
 		_, _, b := color.Hsv()
 		mods := map[string]int{"lighten": 1, "darken": 1}
 
 		for _, shade := range color.Shades(p.minShade, p.maxShade, p.shadeInc) {
 			_, _, sb := shade.Hsv()
-			modifier := "lighten"
+			style := "lighten"
 
 			if sb < b {
-				modifier = "darken"
+				style = "darken"
 			}
 
-			x, _ := mods[modifier]
-			result += template.CSS(fmt.Sprintf(".bg-%d.%s-%d { background-color: %s; }\n", i, modifier, x, shade.Hex()))
-			mods[modifier] += 1
+			x, _ := mods[style]
+			modifier := fmt.Sprintf("%s-%d", style, x)
+
+			result += p.rule(i, shade.Hex(), "bg", modifier)
+			result += p.rule(i, shade.Hex(), "fg", modifier)
+
+			mods[style] += 1
 		}
 	}
 

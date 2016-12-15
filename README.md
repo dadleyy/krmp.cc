@@ -37,6 +37,9 @@ The following parameters can be added to the url (as query string parameters) in
 | shade_min | `number` | Used to determine the minimum brightness of shades to generate. (0 - 100) |
 | shade_max | `number` | Used to determine the maxium brightness of shades to generate. (0 - 100) |
 | expanded | `boolean` | If set to `true`, the generated css will _not_ be minified. |
+| noconflict | `string` | If provided, this string will be added to every class declaration. |
+
+##### Providing base color in url path
 
 Instead of providing `base` as a query parameter, it can be directly inserted in the url path: [`/428aa7`](https://krmp.cc/428aa7)
 

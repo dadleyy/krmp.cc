@@ -92,5 +92,5 @@ func (runtime *RequestRuntime) Package(hex string) (Package, error) {
 	}
 
 	expanded := query.Get("expanded") == "true"
-	return Package{result.Variations(), min, max, inc, expanded}, nil
+	return Package{result.Variations(), min, max, inc, expanded, query.Get("noconflict")}, nil
 }
