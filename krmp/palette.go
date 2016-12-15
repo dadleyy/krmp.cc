@@ -14,23 +14,10 @@ func (p *Palette) String() string {
 	return fmt.Sprintf("H(%f) C(%f) L(%f)", h, c, l)
 }
 
-func (p *Palette) Shades(color colorful.Color, increment float64) []colorful.Color {
-	result := make([]colorful.Color, 0)
-
-	hue, saturation, brightness := color.Hsv()
-
-	for brightness > 0.01 && brightness < 0.99 {
-		result = append(result, colorful.Hsv(hue, saturation, brightness))
-		brightness = brightness + increment
-	}
-
-	return result
-}
-
-func (p *Palette) Variations() []colorful.Color {
-	result := make([]colorful.Color, 0)
+func (p *Palette) Variations() []Variation {
+	result := make([]Variation, 0)
 	steps := p.steps
-	head := p.base
+	head := Variation{p.base}
 
 	amt := (360.00 / float64(steps))
 
@@ -45,7 +32,7 @@ func (p *Palette) Variations() []colorful.Color {
 		}
 
 		// move the head down some hue
-		head = colorful.Hsv(next, saturation, brightness)
+		head = Variation{colorful.Hsv(next, saturation, brightness)}
 		steps--
 	}
 

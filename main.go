@@ -21,25 +21,18 @@ func logger(next krmp.Terminal) krmp.Terminal {
 }
 
 func create(runtime *krmp.RequestRuntime) {
-	stylesheet, err := runtime.Stylesheet()
+	pkg, err := runtime.Package()
 
 	if err != nil {
 		runtime.Error(err)
 		return
 	}
 
-	runtime.Finish(krmp.Result{stylesheet, "text/css"})
+	runtime.Finish(krmp.Result{pkg.RawCss(), "text/css"})
 }
 
 func preview(runtime *krmp.RequestRuntime) {
-	stylesheet, err := runtime.Stylesheet()
-
-	if err != nil {
-		runtime.Error(err)
-		return
-	}
-
-	markup, err := runtime.Preview()
+	pkg, err := runtime.Package()
 
 	if err != nil {
 		runtime.Error(err)
@@ -58,7 +51,7 @@ func preview(runtime *krmp.RequestRuntime) {
 	context := struct {
 		Styles   template.CSS
 		Previews template.HTML
-	}{template.CSS(stylesheet.String()), template.HTML(markup.String())}
+	}{pkg.Stylesheet(), pkg.Markup()}
 
 	if err := engine.Execute(buffer, context); err != nil {
 		runtime.Error(err)
