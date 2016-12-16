@@ -58,21 +58,24 @@ func (mux *Multiplexer) ServeHTTP(writer http.ResponseWriter, request *http.Requ
 
 	go handler(&runtime)
 
+	finish := func() {
+		close(errors)
+		close(results)
+	}
+
+	defer finish()
+
 	select {
 	case err := <-errors:
 		logger.Printf("failed: %s", err.Error())
 		writer.WriteHeader(422)
 		writer.Write([]byte(err.Error()))
-		return
 	case result := <-results:
 		header := writer.Header()
 		header.Set("Content-Type", result.ContentType)
 		writer.WriteHeader(200)
 		io.Copy(writer, result)
 	}
-
-	close(errors)
-	close(results)
 }
 
 func (mux *Multiplexer) Use(routes []Route, middleware []Middleware) {
