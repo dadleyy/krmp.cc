@@ -3,6 +3,7 @@ package krmp
 import "fmt"
 import "bytes"
 import "html/template"
+import "encoding/json"
 import "github.com/tdewolff/minify"
 import "github.com/tdewolff/minify/css"
 
@@ -64,6 +65,21 @@ func (p Package) Markup() template.HTML {
 	}
 
 	return result + template.HTML("</div>")
+}
+
+func (p Package) Bowerfile() (template.JS, error) {
+	definition := struct {
+		Name        string `json:"name"`
+		Description string `json:"description"`
+	}{"krmp.cc", "on the fly css pallete stylsheet"}
+
+	data, err := json.Marshal(definition)
+
+	if err != nil {
+		return template.JS(""), err
+	}
+
+	return template.JS(string(data)), nil
 }
 
 func (p Package) Stylesheet() (template.CSS, error) {

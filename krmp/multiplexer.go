@@ -1,26 +1,25 @@
 package krmp
 
-import "os"
 import "io"
 import "fmt"
 import "log"
 import "net/http"
 
 type Multiplexer struct {
+	*log.Logger
 	routes     []Route
 	middleware []Middleware
 }
 
 func (mux *Multiplexer) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
-	logger := log.New(os.Stdout, "krmp", log.LstdFlags)
-	results := make(chan Result)
-	errors := make(chan error)
-
-	runtime := RequestRuntime{logger, request, results, errors, []string{}}
+	params := make([]string, 0)
+	runtime := RequestRuntime{mux.Logger, request, params}
 	url := request.URL
 
-	handler := func(runtime *RequestRuntime) {
-		runtime.Error(fmt.Errorf("not found"))
+	mux.Printf("%s %s", request.Method, request.URL.Path)
+
+	handler := func(runtime *RequestRuntime) (Result, error) {
+		return Result{}, fmt.Errorf("not found")
 	}
 
 	path := url.EscapedPath()
@@ -30,7 +29,7 @@ func (mux *Multiplexer) ServeHTTP(writer http.ResponseWriter, request *http.Requ
 		}
 
 		if subs := element.Path.NumSubexp(); subs == 0 {
-			logger.Printf("no sub expressions found for \"%v\", moving on", element.Path)
+			mux.Printf("no sub expressions found for \"%v\", moving on", element.Path)
 			handler = element.Handler
 			break
 		}
@@ -38,7 +37,7 @@ func (mux *Multiplexer) ServeHTTP(writer http.ResponseWriter, request *http.Requ
 		groups := element.Path.FindAllStringSubmatch(path, -1)
 
 		if groups == nil {
-			logger.Printf("found NO matches: %v", groups)
+			mux.Printf("found NO matches: %v", groups)
 			handler = element.Handler
 			break
 		}
@@ -47,7 +46,7 @@ func (mux *Multiplexer) ServeHTTP(writer http.ResponseWriter, request *http.Requ
 			runtime.pathParams = append(runtime.pathParams, group)
 		}
 
-		logger.Printf("path params: %v", runtime.pathParams)
+		mux.Printf("path params: %v", runtime.pathParams)
 		handler = element.Handler
 		break
 	}
@@ -56,26 +55,26 @@ func (mux *Multiplexer) ServeHTTP(writer http.ResponseWriter, request *http.Requ
 		handler = ware(handler)
 	}
 
-	go handler(&runtime)
+	result, err := handler(&runtime)
 
-	finish := func() {
-		close(errors)
-		close(results)
-	}
-
-	defer finish()
-
-	select {
-	case err := <-errors:
-		logger.Printf("failed: %s", err.Error())
+	if err != nil {
+		mux.Printf("failed: %s", err.Error())
 		writer.WriteHeader(422)
 		writer.Write([]byte(err.Error()))
-	case result := <-results:
-		header := writer.Header()
-		header.Set("Content-Type", result.ContentType)
-		writer.WriteHeader(200)
-		io.Copy(writer, result)
+		return
 	}
+
+	header := writer.Header()
+	header.Set("Content-Type", result.ContentType)
+	header.Set("Content-Length", fmt.Sprintf("%d", result.Len()))
+
+	if result.Attachment != "" {
+		mux.Printf("adding disposition header: %s", result.Attachment)
+		header.Set("Content-Disposition", fmt.Sprintf("filename=\"%s\";", result.Attachment))
+	}
+
+	writer.WriteHeader(200)
+	io.Copy(writer, result)
 }
 
 func (mux *Multiplexer) Use(routes []Route, middleware []Middleware) {

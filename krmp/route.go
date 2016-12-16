@@ -2,7 +2,7 @@ package krmp
 
 import "regexp"
 
-type Terminal func(*RequestRuntime)
+type Terminal func(*RequestRuntime) (Result, error)
 type Middleware func(Terminal) Terminal
 
 type Route struct {

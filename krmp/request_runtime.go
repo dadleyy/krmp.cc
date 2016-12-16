@@ -17,17 +17,7 @@ const PaletteMaxSteps = 36
 type RequestRuntime struct {
 	*log.Logger
 	*http.Request
-	results    chan Result
-	errors     chan error
 	pathParams []string
-}
-
-func (runtime *RequestRuntime) Finish(r Result) {
-	runtime.results <- r
-}
-
-func (runtime *RequestRuntime) Error(err error) {
-	runtime.errors <- err
 }
 
 func (runtime *RequestRuntime) PathParameter(index int) (string, error) {

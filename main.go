@@ -1,93 +1,15 @@
 package main
 
+import "os"
 import "fmt"
 import "log"
 import "flag"
 import "time"
-import "bytes"
 import "regexp"
 import "net/http"
-import "html/template"
 
 import "github.com/dadleyy/krmp.cc/krmp"
-
-func logger(next krmp.Terminal) krmp.Terminal {
-	exec := func(runtime *krmp.RequestRuntime) {
-		runtime.Printf("%s %s %s", runtime.Request.Method, runtime.URL.EscapedPath(), runtime.URL.RawQuery)
-		next(runtime)
-	}
-
-	return exec
-}
-
-func create(runtime *krmp.RequestRuntime) {
-	hex := runtime.URL.Query().Get("base")
-
-	if alt, err := runtime.PathParameter(0); err == nil {
-		hex = alt
-	}
-
-	pkg, err := runtime.Package(hex)
-
-	if err != nil {
-		runtime.Error(err)
-		return
-	}
-
-	styles, err := pkg.Stylesheet()
-
-	if err != nil {
-		runtime.Error(err)
-		return
-	}
-
-	contents := bytes.NewBufferString(string(styles))
-	runtime.Finish(krmp.Result{contents, "text/css"})
-}
-
-func preview(runtime *krmp.RequestRuntime) {
-	hex := runtime.URL.Query().Get("base")
-
-	if alt, err := runtime.PathParameter(0); err == nil {
-		hex = alt
-	}
-
-	runtime.Printf("previewing hex \"%s\"", hex)
-	pkg, err := runtime.Package(hex)
-
-	if err != nil {
-		runtime.Error(err)
-		return
-	}
-
-	engine, err := template.ParseFiles("preview.html")
-
-	if err != nil {
-		runtime.Error(err)
-		return
-	}
-
-	buffer := bytes.NewBuffer(make([]byte, 0))
-
-	styles, err := pkg.Stylesheet()
-
-	if err != nil {
-		runtime.Error(err)
-		return
-	}
-
-	context := struct {
-		Styles   template.CSS
-		Previews template.HTML
-	}{styles, pkg.Markup()}
-
-	if err := engine.Execute(buffer, context); err != nil {
-		runtime.Error(err)
-		return
-	}
-
-	runtime.Finish(krmp.Result{buffer, "text/html"})
-}
+import "github.com/dadleyy/krmp.cc/routes"
 
 func main() {
 	var port string
@@ -95,18 +17,20 @@ func main() {
 	flag.StringVar(&port, "port", "8080", "which port to run the server on")
 	flag.Parse()
 
-	log.Printf("starting server on port %s\n", port)
+	logger := log.New(os.Stdout, "[krmp.cc] ", log.LstdFlags)
+	logger.Printf("starting server on port %s\n", port)
 
-	mux := krmp.Multiplexer{}
+	mux := krmp.Multiplexer{Logger: logger}
 
 	routes := []krmp.Route{
-		krmp.Route{"GET", regexp.MustCompile("^/preview$"), preview},
-		krmp.Route{"GET", regexp.MustCompile("^/([a-f0-9]{6}|[a-f0-9]{3})$"), create},
-		krmp.Route{"GET", regexp.MustCompile("^/([a-f0-9]{6}|[a-f0-9]{3})/preview$"), preview},
-		krmp.Route{"GET", regexp.MustCompile(".*"), create},
+		krmp.Route{"GET", regexp.MustCompile("^/preview$"), routes.Preview},
+		krmp.Route{"GET", regexp.MustCompile("^/([a-f0-9]{6}|[a-f0-9]{3})$"), routes.Create},
+		krmp.Route{"GET", regexp.MustCompile("^/([a-f0-9]{6}|[a-f0-9]{3})/preview$"), routes.Preview},
+		krmp.Route{"GET", regexp.MustCompile("^/([a-f0-9]{6}|[a-f0-9]{3})/download$"), routes.Download},
+		krmp.Route{"GET", regexp.MustCompile(".*"), routes.Create},
 	}
 
-	middleware := []krmp.Middleware{logger}
+	middleware := []krmp.Middleware{}
 
 	mux.Use(routes, middleware)
 
