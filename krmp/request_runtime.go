@@ -85,6 +85,12 @@ func (runtime *RequestRuntime) Package(hex string) (Package, error) {
 		return Package{}, fmt.Errorf("noconflict classes must be less than 7 characters long")
 	}
 
-	expanded := query.Get("expanded") == "true"
-	return Package{result.Variations(), min, max, inc, expanded, query.Get("noconflict")}, nil
+	return Package{
+		variations: result.Variations(),
+		minShade:   min,
+		maxShade:   max,
+		shadeInc:   inc,
+		expanded:   query.Get("expanded") == "true",
+		noconflict: query.Get("noconflict"),
+	}, nil
 }

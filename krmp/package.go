@@ -7,6 +7,8 @@ import "encoding/json"
 import "github.com/tdewolff/minify"
 import "github.com/tdewolff/minify/css"
 
+const PackageDefaultName = "cc"
+
 type Package struct {
 	variations []Variation
 	minShade   float64
@@ -68,10 +70,16 @@ func (p Package) Markup() template.HTML {
 }
 
 func (p Package) Bowerfile() (template.JS, error) {
+	name := fmt.Sprintf("krmp-%s", PackageDefaultName)
+
+	if p.noconflict != "" {
+		name = fmt.Sprintf("krmp-%s", p.noconflict)
+	}
+
 	definition := struct {
 		Name        string `json:"name"`
 		Description string `json:"description"`
-	}{"krmp.cc", "on the fly css pallete stylsheet"}
+	}{name, "on the fly css pallete stylsheet"}
 
 	data, err := json.Marshal(definition)
 
