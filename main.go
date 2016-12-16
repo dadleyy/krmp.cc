@@ -26,8 +26,8 @@ func main() {
 		krmp.Route{"GET", regexp.MustCompile("^/preview$"), routes.Preview},
 		krmp.Route{"GET", regexp.MustCompile("^/([a-f0-9]{6}|[a-f0-9]{3})$"), routes.Create},
 		krmp.Route{"GET", regexp.MustCompile("^/([a-f0-9]{6}|[a-f0-9]{3})/preview$"), routes.Preview},
-		krmp.Route{"GET", regexp.MustCompile("^/([a-f0-9]{6}|[a-f0-9]{3})/download$"), routes.Download},
-		krmp.Route{"GET", regexp.MustCompile(".*"), routes.Create},
+		krmp.Route{"GET", regexp.MustCompile("^/([a-f0-9]{6}|[a-f0-9]{3})/(download|package)$"), routes.Download},
+		krmp.Route{"GET", regexp.MustCompile("^/$"), routes.Create},
 	}
 
 	middleware := []krmp.Middleware{}
