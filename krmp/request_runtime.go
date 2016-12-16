@@ -47,7 +47,7 @@ func (runtime *RequestRuntime) Package(hex string) (Package, error) {
 		steps, err := strconv.Atoi(query.Get("steps"))
 
 		if err != nil || steps > PaletteMaxSteps {
-			return Package{}, fmt.Errorf("step count must be valid number between 1 - 360")
+			return Package{}, fmt.Errorf("step count must be valid number between 1 - 36")
 		}
 
 		result.steps = uint(steps)
