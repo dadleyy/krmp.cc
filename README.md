@@ -44,11 +44,6 @@ The following query string parameters can be added in order to customize the gen
 | expanded | `boolean` | If set to `true`, the generated css will _not_ be minified. |
 | noconflict | `string` | If provided, this string will be added to every class declaration. *This will also be used to modify the bower package name generated during downloads.* |
 
-##### Providing base color in url path
-
-Instead of providing `base` as a query parameter, it can be directly inserted in the url path: [`/428aa7`](https://krmp.cc/428aa7)
-
-
 ### Previewing
 
 To preview any styesheet, add `/preview` to the url path:
@@ -74,7 +69,6 @@ Which, would be inserted into the `bower.json` file of the project as:
 
 ```json
   "dependencies": {
-    "krmp-app": "http://0.0.0.0:8080/656/package?noconflict=app"
+    "krmp-app": "https://krmp.cc/656/package?noconflict=app"
   }
 ```
-
