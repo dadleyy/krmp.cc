@@ -16,36 +16,21 @@ type Package struct {
 	shadeInc   float64
 	expanded   bool
 	noconflict string
-}
-
-func (p Package) rule(number int, hex, layer, modifier string) template.CSS {
-	selector := fmt.Sprintf(".%s-%d", layer, number)
-
-	if p.noconflict != "" {
-		selector += fmt.Sprintf(".%s", p.noconflict)
-	}
-
-	if modifier != "" {
-		selector += fmt.Sprintf(".%s", modifier)
-	}
-
-	property := "background-color"
-
-	if layer == "fg" {
-		property = "color"
-	}
-
-	rule := fmt.Sprintf("%s: %s", property, hex)
-
-	return template.CSS(fmt.Sprintf("%s { %s; }\n", selector, rule))
+	rules      map[string]string
 }
 
 func (p Package) Markup() template.HTML {
 	result := template.HTML("<div class=\"clearfix\">")
 
+	bg, ok := p.rules["background-color"]
+
+	if ok != true {
+		return template.HTML("")
+	}
+
 	for i, color := range p.variations {
 		result += template.HTML("<div class=\"clearfix\">")
-		result += template.HTML(fmt.Sprintf("<div class=\"swatch bg-%d %s\"></div>", i, p.noconflict))
+		result += template.HTML(fmt.Sprintf("<div class=\"swatch %s-%d %s\"></div>", bg, i, p.noconflict))
 
 		_, _, b := color.Hsv()
 		mods := map[string]int{"lighten": 1, "darken": 1}
@@ -59,7 +44,7 @@ func (p Package) Markup() template.HTML {
 			}
 
 			x, _ := mods[modifier]
-			result += template.HTML(fmt.Sprintf("<div class=\"swatch bg-%d %s-%d %s\"></div>", i, modifier, x, p.noconflict))
+			result += template.HTML(fmt.Sprintf("<div class=\"swatch %s-%d %s-%d %s\"></div>", bg, i, modifier, x, p.noconflict))
 			mods[modifier] += 1
 		}
 
@@ -94,8 +79,10 @@ func (p Package) Stylesheet() (template.CSS, error) {
 	result := template.CSS("")
 
 	for i, color := range p.variations {
-		result += p.rule(i, color.Hex(), "bg", "")
-		result += p.rule(i, color.Hex(), "fg", "")
+		for name, alias := range p.rules {
+			class := fmt.Sprintf("%s-%d", alias, i)
+			result += template.CSS(fmt.Sprintf(".%s { %s: %s; }\n", class, name, color.Hex()))
+		}
 
 		_, _, b := color.Hsv()
 		mods := map[string]int{"lighten": 1, "darken": 1}
@@ -111,8 +98,10 @@ func (p Package) Stylesheet() (template.CSS, error) {
 			x, _ := mods[style]
 			modifier := fmt.Sprintf("%s-%d", style, x)
 
-			result += p.rule(i, shade.Hex(), "bg", modifier)
-			result += p.rule(i, shade.Hex(), "fg", modifier)
+			for name, alias := range p.rules {
+				class := fmt.Sprintf("%s-%d", alias, i)
+				result += template.CSS(fmt.Sprintf(".%s.%s { %s: %s; }\n", class, modifier, name, shade.Hex()))
+			}
 
 			mods[style] += 1
 		}

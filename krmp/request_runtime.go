@@ -13,11 +13,22 @@ const PaletteDefaultShadeInc = 0.05
 const PaletteDefaultShadeMax = 0.99
 const PaletteDefaultShadeMin = 0.50
 const PaletteMaxSteps = 36
+const PaletteMaxNoConflictSize = 6
 
 type RequestRuntime struct {
 	*log.Logger
 	*http.Request
 	pathParams []string
+}
+
+func destructure(in string, on string) (string, string, error) {
+	parts := strings.Split(in, on)
+
+	if len(parts) != 2 {
+		return "", "", fmt.Errorf("invalid string split")
+	}
+
+	return parts[0], parts[1], nil
 }
 
 func (runtime *RequestRuntime) PathParameter(index int) (string, error) {
@@ -76,12 +87,43 @@ func (runtime *RequestRuntime) Package(hex string) (Package, error) {
 		min = float64(m) * 0.01
 	}
 
+	rules := map[string]string{
+		"background-color": "bg",
+		"color":            "fg",
+		"border-color":     "bc",
+	}
+
+	if val, ok := query["rules"]; ok && len(val) == 1 {
+		list := strings.Split(val[0], ",")
+
+		for _, mapping := range list {
+			name, alt, err := destructure(mapping, ":")
+
+			if err != nil {
+				continue
+			}
+
+			if _, exists := rules[name]; exists != true {
+				continue
+			}
+
+			if alt == "-" || alt == "" {
+				delete(rules, name)
+				continue
+			}
+
+			rules[name] = alt
+		}
+	}
+
+	fmt.Printf("current rules: %v\n", rules)
+
 	if query.Get("shades") == "false" {
 		min = 100
 		max = 0
 	}
 
-	if alt := query.Get("noconflict"); len(alt) > 6 {
+	if alt := query.Get("noconflict"); len(alt) > PaletteMaxNoConflictSize {
 		return Package{}, fmt.Errorf("noconflict classes must be less than 7 characters long")
 	}
 
@@ -92,5 +134,6 @@ func (runtime *RequestRuntime) Package(hex string) (Package, error) {
 		shadeInc:   inc,
 		expanded:   query.Get("expanded") == "true",
 		noconflict: query.Get("noconflict"),
+		rules:      rules,
 	}, nil
 }
