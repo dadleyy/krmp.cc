@@ -81,6 +81,11 @@ func (p Package) Stylesheet() (template.CSS, error) {
 	for i, color := range p.variations {
 		for name, alias := range p.rules {
 			class := fmt.Sprintf("%s-%d", alias, i)
+
+			if len(p.noconflict) > 0 {
+				class += fmt.Sprintf(".%s", p.noconflict)
+			}
+
 			result += template.CSS(fmt.Sprintf(".%s { %s: %s; }\n", class, name, color.Hex()))
 		}
 
@@ -100,6 +105,11 @@ func (p Package) Stylesheet() (template.CSS, error) {
 
 			for name, alias := range p.rules {
 				class := fmt.Sprintf("%s-%d", alias, i)
+
+				if len(p.noconflict) > 0 {
+					class += fmt.Sprintf(".%s", p.noconflict)
+				}
+
 				result += template.CSS(fmt.Sprintf(".%s.%s { %s: %s; }\n", class, modifier, name, shade.Hex()))
 			}
 
